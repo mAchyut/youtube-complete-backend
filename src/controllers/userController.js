@@ -43,7 +43,7 @@ const register = asyncHandler(async (req, res) => {
   const avatar = req.files?.avatar[0]?.path;
 
   const coverImage =
-    Array.isArray(req.files.coverImage) &&
+    Array.isArray(req.files?.coverImage) &&
     req.files.coverImage.length !== 0 &&
     req.files?.coverImage[0]?.path;
 
@@ -52,7 +52,7 @@ const register = asyncHandler(async (req, res) => {
   }
   const avatarResponse = await uploadOnCloudinary(avatar);
   if (!avatarResponse) {
-    throw new ApiError(500, "Failed to upload avatar :: server error");
+    throw new ApiError(400, "Failed to upload avatar :: server error");
   }
 
   const coverImageResponse = await uploadOnCloudinary(coverImage);

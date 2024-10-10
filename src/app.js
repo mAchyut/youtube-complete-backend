@@ -1,8 +1,11 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
+import helmet from "helmet";
 
 const app = express();
+
+app.use(helmet());
 
 app.use(
   cors({
@@ -29,6 +32,7 @@ import subscriptionRouter from "./routes/subscriptionRoute.js";
 import likeRouter from "./routes/likeRoute.js";
 import playlistRouter from "./routes/playlistRoute.js";
 import dashboardRouter from "./routes/dashboardRoute.js";
+
 //routes declaraton
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1", healthRoute);
@@ -56,5 +60,21 @@ app.use("/api/v1/playlist", playlistRouter);
 
 //dashboard
 app.use("/api/v1/dashboard", dashboardRouter);
+
+//Error middleware after all the routes and middlewares so that it converts the error format to JSON
+// After all your route declarations
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  // Set a default status code (500 if not explicitly provided)
+  const statusCode = err.statusCode || 500;
+
+  // Respond with JSON error object
+  res.status(statusCode).json({
+    status: "error",
+    statusCode,
+    message: err.message || "Internal Server Error",
+  });
+});
 
 export { app };
