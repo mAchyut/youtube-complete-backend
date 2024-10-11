@@ -1,6 +1,7 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { User } from "../models/userModel.js";
+import fs from "fs";
 import {
   deleteFromcloudinary,
   uploadOnCloudinary,
@@ -37,6 +38,13 @@ const register = asyncHandler(async (req, res) => {
     $or: [{ username }, { email }],
   });
   if (existingUser) {
+    if (
+      Array.isArray(req.files?.coverImage) &&
+      req.files.coverImage.length !== 0
+    ) {
+      fs.unlinkSync(req.files?.coverImage[0]?.path);
+    }
+    fs.unlinkSync(req.files?.avatar[0]?.path);
     throw new ApiError(400, "user with provided username/email already exists");
   }
 
