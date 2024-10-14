@@ -34,7 +34,10 @@ const getAllVideos = asyncHandler(async (req, res) => {
   ]).exec();
 
   // Populate the owner details from the User collection
-  await Video.populate(videos, { path: "owner", select: "name email" });
+  await Video.populate(videos, {
+    path: "owner",
+    select: "username avatar email",
+  });
 
   const totalVideos = await Video.countDocuments(matchQuery);
 
