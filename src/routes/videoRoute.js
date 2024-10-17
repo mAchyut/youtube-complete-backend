@@ -9,10 +9,12 @@ import {
 } from "../controllers/videoController.js";
 // import { verifyJWT } from "../middlewares/authMiddleware.js";
 import { upload } from "../middlewares/multer.js";
+import { verifyJWT } from "../middlewares/authMiddleware.js";
 
 const videoRouter = Router();
 
 videoRouter.route("/all-videos").post(getAllVideos);
+videoRouter.use(verifyJWT);
 videoRouter.route("/video-upload").post(
   upload.fields([
     {

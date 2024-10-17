@@ -3,6 +3,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import {
   deleteFromcloudinary,
   uploadOnCloudinary,
+  deleteVideoFromcloudinary,
 } from "../utils/cloudinary.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
@@ -121,12 +122,15 @@ const updateVideo = asyncHandler(async (req, res) => {
   // update video details like title, description, thumbnail
   const { title, description } = req.body;
   const thumbnail = req.file;
+  console.log(req.body);
+  console.log(videoId);
 
   if (!title && !description && !thumbnail) {
     throw new ApiError(401, "No fields to update");
   }
   // console.log(req.file);
-  const updateThumbnail = await uploadOnCloudinary(thumbnail?.path);
+  const updateThumbnail =
+    thumbnail && (await uploadOnCloudinary(thumbnail?.path));
   //delete previous thumbnail from cloudinary once newone is uploaded
 
   // console.log("TRYING NOT TO SEND THUMBNAIL");
@@ -169,7 +173,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
   }
 
   //Removing files from cloudinary once deleted from database
-  await deleteFromcloudinary(deleteVideoFile?.videoFile);
+  await deleteVideoFromcloudinary(deleteVideoFile?.videoFile);
   await deleteFromcloudinary(deleteVideoFile?.thumbnail);
   res
     .status(200)

@@ -40,8 +40,23 @@ const deleteFromcloudinary = async (url) => {
   try {
     let first = url.slice(url.indexOf("upload") + 7);
     let second = first.slice(first.indexOf("/") + 1, first.lastIndexOf("."));
-
-    return await cloudinary.uploader.destroy(second);
+    return await cloudinary.uploader.destroy(second, {
+      resource_type: "image",
+    });
+  } catch (error) {
+    console.log(
+      `An error occurred in removing previous file(s): ${error.message}`
+    );
+  }
+};
+const deleteVideoFromcloudinary = async (url) => {
+  if (!url) return null;
+  try {
+    let first = url.slice(url.indexOf("upload") + 7);
+    let second = first.slice(first.indexOf("/") + 1, first.lastIndexOf("."));
+    return await cloudinary.uploader.destroy(second, {
+      resource_type: "video",
+    });
   } catch (error) {
     console.log(
       `An error occurred in removing previous file(s): ${error.message}`
@@ -49,4 +64,4 @@ const deleteFromcloudinary = async (url) => {
   }
 };
 
-export { uploadOnCloudinary, deleteFromcloudinary };
+export { uploadOnCloudinary, deleteFromcloudinary, deleteVideoFromcloudinary };
