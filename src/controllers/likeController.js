@@ -39,6 +39,44 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
   }
 });
 
+const getVideoLikes = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  const userId = req?.user?._id; // Accessing the logged-in user's ID
+
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(401, "Invalid video ID or Video may be deleted");
+  }
+
+  // Calculate total likes for the video
+  const totalLikes = await Like.aggregate([
+    {
+      $match: { video: new mongoose.Types.ObjectId(videoId) },
+    },
+    {
+      $group: { _id: "$video", totalLikes: { $sum: 1 } },
+    },
+  ]);
+
+  // Check if the user has liked the video
+  const isLiked = await Like.findOne({
+    video: videoId,
+    likedBy: userId,
+  });
+
+  const response = {
+    totalLikes: totalLikes[0]?.totalLikes || 0,
+    isLiked: !!isLiked, // true if the user has liked, false otherwise
+  };
+
+  if (!totalLikes) {
+    throw new ApiError(404, "Failed to fetch total likes of the video");
+  }
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Video likes fetched successfully", response));
+});
+
 const toggleCommentLike = asyncHandler(async (req, res) => {
   const { commentId } = req.params;
   // toggle like on comment
@@ -77,6 +115,34 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
   }
 });
 
+const getCommentLikes = asyncHandler(async (req, res) => {
+  const { commentId } = req.params;
+  if (!isValidObjectId(commentId)) {
+    throw new ApiError(404, "Invalid Video ID");
+  }
+  const commentLikes = await Like.aggregate([
+    {
+      $match: {
+        comment: new mongoose.Types.ObjectId(commentId),
+      },
+    },
+    {
+      $group: {
+        _id: "$comment",
+        commentLikes: { $sum: 1 },
+      },
+    },
+  ]);
+  if (!commentLikes) {
+    throw new ApiError(401, "Failed to fetch comment likes");
+  }
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, "Comment likes fetched successfully", commentLikes)
+    );
+});
+
 const toggleTweetLike = asyncHandler(async (req, res) => {
   const { tweetId } = req.params;
   // toggle like on tweet
@@ -112,6 +178,32 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Tweet unliked successfully", false));
 });
 
+const getTweetLikes = asyncHandler(async (req, res) => {
+  const { tweetId } = req.params;
+  if (!isValidObjectId(tweetId)) {
+    throw new ApiError(404, "Invalid Video ID");
+  }
+  const tweetLikes = await Like.aggregate([
+    {
+      $match: {
+        tweet: new mongoose.Types.ObjectId(tweetId),
+      },
+    },
+    {
+      $group: {
+        _id: "$tweet",
+        tweetLikes: { $sum: 1 },
+      },
+    },
+  ]);
+  if (!tweetLikes) {
+    throw new ApiError(401, "Failed to fetch Tweet likes");
+  }
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Tweet likes fetched successfully", tweetLikes));
+});
+
 const getMyLikedVideos = asyncHandler(async (req, res) => {
   // get all liked videos
   if (!req.user?._id) {
@@ -137,7 +229,7 @@ const getMyLikedVideos = asyncHandler(async (req, res) => {
     {
       $project: {
         video: 1,
-        likedBy: { username: 1, avatar: 1, fullName: 1, coverImage: 1 },
+        likedBy: { _id: 1, username: 1 },
       },
     },
   ]);
@@ -160,4 +252,7 @@ export {
   toggleTweetLike,
   toggleVideoLike,
   getMyLikedVideos,
+  getVideoLikes,
+  getCommentLikes,
+  getTweetLikes,
 };

@@ -38,11 +38,11 @@ app.use("/api/v1/users", userRouter);
 app.use("/api/v1", healthRoute);
 
 //injecting verification for every route after this/ user must login to access these
-// app.use(verifyJWT);
 
 //video
 app.use("/api/v1/video", videoRouter);
 
+app.use(verifyJWT);
 //comment
 app.use("/api/v1/video/comment", commentRouter);
 

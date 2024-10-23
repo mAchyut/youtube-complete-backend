@@ -48,12 +48,12 @@ const getChannelStats = asyncHandler(async (req, res) => {
   const likesCount = await Like.aggregate([
     {
       $match: {
-        owner: new mongoose.Types.ObjectId(req.user?._id),
+        likedBy: new mongoose.Types.ObjectId(req.user?._id),
       },
     },
     {
       $group: {
-        _id: "$owner",
+        _id: "$likedBy",
         totalLikes: {
           $sum: 1,
         },

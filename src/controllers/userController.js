@@ -40,12 +40,20 @@ const register = asyncHandler(async (req, res) => {
   if (existingUser) {
     if (
       Array.isArray(req.files?.coverImage) &&
-      req.files.coverImage.length !== 0
+      req.files.coverImage.length !== 0 &&
+      req.files?.coverImage[0]?.path !== req.files?.avatar[0]?.path
     ) {
       fs.unlinkSync(req.files?.coverImage[0]?.path);
     }
     fs.unlinkSync(req.files?.avatar[0]?.path);
     throw new ApiError(400, "user with provided username/email already exists");
+  } else if (
+    Array.isArray(req.files?.coverImage) &&
+    req.files.coverImage.length !== 0 &&
+    req.files?.coverImage[0]?.path === req.files?.avatar[0]?.path
+  ) {
+    fs.unlinkSync(req.files?.coverImage[0]?.path);
+    throw new ApiError(401, "Please use different file names");
   }
 
   const avatar = req.files?.avatar[0]?.path;
@@ -74,7 +82,7 @@ const register = asyncHandler(async (req, res) => {
     coverImage: coverImageResponse?.url || "",
   });
 
-  const createdUser = await User.findById(user._id).select(
+  const createdUser = await User.findById(user?._id).select(
     "-refreshToken -password"
   );
 
@@ -457,7 +465,8 @@ const addWatchHistory = asyncHandler(async (req, res) => {
   const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
-      $push: {
+      $addToSet: {
+        //addToSet adds only unique values, where as push will push any
         watchHistory: videoId,
       },
     },

@@ -7,7 +7,7 @@ import {
 } from "../utils/cloudinary.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
-import mongoose from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const {
@@ -101,7 +101,7 @@ const getVideoById = asyncHandler(async (req, res) => {
   if (!videoId) {
     throw new ApiError(400, "Video ID not found");
   }
-  const video = await Video.findById(videoId);
+  const video = await Video.findById(videoId).populate("owner", "username");
   if (!video) {
     throw new ApiError(500, "Video file no longer exist");
   }
@@ -122,8 +122,6 @@ const updateVideo = asyncHandler(async (req, res) => {
   // update video details like title, description, thumbnail
   const { title, description } = req.body;
   const thumbnail = req.file;
-  console.log(req.body);
-  console.log(videoId);
 
   if (!title && !description && !thumbnail) {
     throw new ApiError(401, "No fields to update");
@@ -215,6 +213,35 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     );
 });
 
+const addViews = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(404, "Invalid video ID");
+  }
+  const updateViews =
+    req.user?._id &&
+    (await Video.findByIdAndUpdate(
+      videoId,
+      {
+        $inc: {
+          views: 1,
+        },
+      },
+      {
+        new: true,
+      }
+    ));
+
+  if (!updateViews) {
+    throw new ApiError(401, "Failed to add views, Video may no longer exist");
+  }
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, "View added to the video successfully", updateViews)
+    );
+});
+
 export {
   getAllVideos,
   publishAVideo,
@@ -222,4 +249,5 @@ export {
   updateVideo,
   deleteVideo,
   togglePublishStatus,
+  addViews,
 };
