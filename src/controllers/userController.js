@@ -434,20 +434,28 @@ const getWatchHistory = asyncHandler(async (req, res) => {
               },
             },
           },
+          {
+            $sort: {
+              createdAt: -1, // Sort by watchedAt descending (most recent first)
+            },
+          },
         ],
+      },
+    },
+    {
+      $project: {
+        watchHistory: 1,
       },
     },
   ]);
 
-  res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        "User's watch history fetched successfully",
-        user[0].watchHistory
-      )
-    );
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      "User's watch history fetched successfully",
+      user[0]?.watchHistory || [] // Return an empty array if no history exists
+    )
+  );
 });
 
 //add Watch History(videoId(s)) in user

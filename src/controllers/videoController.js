@@ -61,14 +61,16 @@ const publishAVideo = asyncHandler(async (req, res) => {
       "All fields are required (video file, thumbnail, title and description)"
     );
   }
-  const videoUpload = await uploadOnCloudinary(video[0]?.path);
   const thumbnailUpload = await uploadOnCloudinary(thumbnail[0]?.path);
+  const videoUpload = await uploadOnCloudinary(video[0]?.path);
   // console.log(videoUpload.duration);
 
   if (!videoUpload || !thumbnailUpload) {
+    await deleteFromcloudinary(thumbnailUpload?.url);
+    await deleteVideoFromcloudinary(videoUpload?.url);
     throw new ApiError(
       500,
-      "An error occurred while uploading the video & thumbnail"
+      "An error occurred while uploading the video & thumbnail,[ max-video:100MB & thumbnail:10MB]"
     );
   }
 

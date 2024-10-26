@@ -47,16 +47,25 @@ const getChannelStats = asyncHandler(async (req, res) => {
 
   const likesCount = await Like.aggregate([
     {
+      $lookup: {
+        from: "videos", // Make sure this matches the name of your Video collection
+        localField: "video",
+        foreignField: "_id",
+        as: "videoDetails",
+      },
+    },
+    {
+      $unwind: "$videoDetails",
+    },
+    {
       $match: {
-        likedBy: new mongoose.Types.ObjectId(req.user?._id),
+        "videoDetails.owner": new mongoose.Types.ObjectId(req.user?._id), // Match videos owned by the user
       },
     },
     {
       $group: {
-        _id: "$likedBy",
-        totalLikes: {
-          $sum: 1,
-        },
+        _id: null,
+        totalLikes: { $sum: 1 }, // Sum up all likes for the user's videos
       },
     },
   ]);

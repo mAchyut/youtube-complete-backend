@@ -31,9 +31,12 @@ const getVideoComments = asyncHandler(async (req, res) => {
     {
       $project: {
         content: 1,
-        owner: { fullName: 1, username: 1, avatar: 1 },
+        owner: { _id: 1, username: 1, avatar: 1 },
         createdAt: 1,
       },
+    },
+    {
+      $sort: { createdAt: -1 }, // Sort by createdAt in descending order
     },
     {
       $skip: (page - 1) * limit,
@@ -43,9 +46,9 @@ const getVideoComments = asyncHandler(async (req, res) => {
     },
   ]);
 
-  if (!comment.length) {
-    throw new ApiError(400, "No comments yet");
-  }
+  // if (!comment?.length) {
+  //   throw new ApiError(400, "No comments found");
+  // }
   res
     .status(200)
     .json(new ApiResponse(200, "Comments fetched successfully", comment));
@@ -55,7 +58,7 @@ const addComment = asyncHandler(async (req, res) => {
   // add a comment to a video
   const { comment } = req.body;
   const { videoId } = req.params;
-  if (!comment?.length) {
+  if (!comment?.trim()?.length) {
     throw new ApiError(400, "Comment cannot be empty");
   } else if (!videoId) {
     throw new ApiError(401, "Video ID not found");
