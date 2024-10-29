@@ -62,7 +62,7 @@ app.use("/api/v1/playlist", playlistRouter);
 app.use("/api/v1/dashboard", dashboardRouter);
 
 //Error middleware after all the routes and middlewares so that it converts the error format to JSON
-// After all your route declarations
+// After all the route declarations
 
 // Error handling middleware
 app.use((err, req, res, next) => {
