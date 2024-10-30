@@ -39,38 +39,27 @@ cloudinary.config({
 
 // fs was failing to delete properly so using exec
 //Using the child_process module to run a system command should bypass any locks caused by the Node.js process, as it executes in a separate shell.
-const uploadOnCloudinary = async (localFilePath) => {
-  console.log("The cloudinary file.....");
-  if (!localFilePath) return null;
+const uploadOnCloudinary = async (fileStream) => {
+  console.log("Uploading file to Cloudinary...");
+  if (!fileStream) return null;
 
-  const deleteFileUsingCommand = (filePath) => {
-    const command =
-      process.platform === "win32"
-        ? `del /f "${filePath}"`
-        : `rm -f "${filePath}"`;
-    exec(command, (err, stdout, stderr) => {
-      if (err) {
-        console.error(`Error deleting file with command:`, stderr);
-      } else {
-        console.log("File deleted successfully with command.");
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { resource_type: "auto" },
+      (error, result) => {
+        if (error) {
+          console.error(
+            `Error in file upload :: cloudinary :: ${error.message}`
+          );
+          reject(error);
+        } else {
+          console.log(`File uploaded on Cloudinary successfully ${result.url}`);
+          resolve(result);
+        }
       }
-    });
-  };
-
-  try {
-    const response = await cloudinary.uploader.upload(localFilePath, {
-      resource_type: "auto",
-    });
-    console.log(`File uploaded on cloudinary successfully ${response.url}`);
-    deleteFileUsingCommand(localFilePath); // Delete after successful upload
-    return response;
-  } catch (error) {
-    deleteFileUsingCommand(localFilePath); // Attempt to delete on upload failure as well
-    console.log(`Error in file upload :: cloudinary :: ${error.message}`);
-    // if (error?.http_code === 413)
-    //   throw Error("Maximum file size is 100MB for video");
-    // throw error;
-  }
+    );
+    fileStream.pipe(uploadStream); // Stream the file to Cloudinary
+  });
 };
 
 const deleteFromcloudinary = async (url) => {
