@@ -130,7 +130,8 @@ const login = asyncHandler(async (req, res) => {
 
   const options = {
     httpOnly: true,
-    secure: true,
+    secure: true, // Make sure your backend is served over HTTPS
+    sameSite: "None", // Required for cross-origin cookie sharing
   };
 
   res
