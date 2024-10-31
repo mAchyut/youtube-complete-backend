@@ -53,31 +53,25 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
 const publishAVideo = asyncHandler(async (req, res) => {
   const { title, description } = req.body;
+  // get video, upload to cloudinary, create video
   const { video, thumbnail } = req.files;
-
   if (!title || !description || !video || !thumbnail) {
     throw new ApiError(
       401,
-      "All fields are required (video, thumbnail, title, description)"
+      "All fields are required (video file, thumbnail, title and description)"
     );
   }
-
-  const thumbnailUpload = await uploadOnCloudinary(
-    process.env.NODE_ENV === "production"
-      ? thumbnail[0].buffer
-      : thumbnail[0].path,
-    thumbnail[0].originalname
-  );
-
-  const videoUpload = await uploadOnCloudinary(
-    process.env.NODE_ENV === "production" ? video[0].buffer : video[0].path,
-    video[0].originalname
-  );
+  const thumbnailUpload = await uploadOnCloudinary(thumbnail[0]?.path);
+  const videoUpload = await uploadOnCloudinary(video[0]?.path);
+  // console.log(videoUpload.duration);
 
   if (!videoUpload || !thumbnailUpload) {
     await deleteFromcloudinary(thumbnailUpload?.url);
     await deleteVideoFromcloudinary(videoUpload?.url);
-    throw new ApiError(500, "Error uploading video & thumbnail");
+    throw new ApiError(
+      500,
+      "An error occurred while uploading the video & thumbnail,[ max-video:100MB & thumbnail:10MB]"
+    );
   }
 
   const createdVideo = await Video.create({
@@ -85,13 +79,22 @@ const publishAVideo = asyncHandler(async (req, res) => {
     thumbnail: thumbnailUpload.url,
     title,
     description,
-    duration: videoUpload.duration,
-    owner: req.user._id,
+    duration: videoUpload?.duration,
+    owner: req.user?._id,
   });
-
+  // console.log(createdVideo);
+  if (!createdVideo) {
+    throw new ApiError(500, "An error occurred while publishing, retry");
+  }
   res
     .status(200)
-    .json(new ApiResponse(200, "Video published successfully", createdVideo));
+    .json(
+      new ApiResponse(
+        200,
+        "Video and thumbnail published successfully",
+        createdVideo
+      )
+    );
 });
 
 const getVideoById = asyncHandler(async (req, res) => {
